@@ -1,0 +1,5 @@
+# ignore the following
+
+
+# copys of python scripts and modules
+**/*.pyc
