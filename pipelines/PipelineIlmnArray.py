@@ -12,7 +12,7 @@ import collections
 import numpy as np
 import itertools
 import sqlite3
-import Pipeline as P
+import CGATPipelines.Pipeline as P
 import random
 import CGAT.Experiment as E
 

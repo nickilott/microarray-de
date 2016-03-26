@@ -257,7 +257,7 @@ def loadProbeInfo(infile, outfile):
     to_cluster = False
     
     tablename = P.toTable(outfile)
-    statement = """/usr/local/bin/python2.7 %s/csv2db.py \
+    statement = """python %s/csv2db.py \
                    -t %s \
                    --log=%s.log \
                    < %s > %s""" % (PARAMS["general_cgatscriptsdir"], 
@@ -294,7 +294,7 @@ def loadProbe2GeneMap(infile, outfile):
     '''
     to_cluster = False
     tablename = P.toTable(outfile)
-    statement = """/usr/local/bin/python2.7 %s/csv2db.py \
+    statement = """python %s/csv2db.py \
                    -t %s \
                    --log=%s.log \
                    < %s > %s""" % (PARAMS["general_cgatscriptsdir"],
@@ -409,7 +409,7 @@ def loadLimma(infile, outfile):
     '''
     to_cluster = False
     tablename = P.toTable(outfile)
-    statement = """/usr/local/bin/python2.7 %s/csv2db.py \
+    statement = """python %s/csv2db.py \
                    -t %s \
                    --log=%s.log \
                    < %s > %s""" % (PARAMS["general_cgatscriptsdir"],
@@ -486,7 +486,7 @@ def loadDifferentiallyExpressedGeneList(infile, outfile):
     '''
     to_cluster = False
     tablename = P.toTable(outfile)
-    statement = """/usr/local/bin/python2.7 %s/csv2db.py \
+    statement = """python %s/csv2db.py \
                    -t %s \
                    --log=%s.log \
                    < %s > %s""" % (PARAMS["general_cgatscriptsdir"],
@@ -589,7 +589,7 @@ def runGO(infiles, outfiles):
     to_cluster = False
     background, genes, gene2pathway = infiles[0], infiles[1], infiles[2]
 
-    statement = """/usr/local/bin/python2.7 %s/runGO.py \
+    statement = """python %s/runGO.py \
                    --genes=%s \
                    --background=%s \
                    --filename-input=%s \
@@ -648,7 +648,7 @@ def loadPathwayGenes(infile, outfile):
     load pathway genes
     '''
     tablename = P.toTable(outfile)
-    statement = """/usr/local/bin/python2.7 %s/csv2db.py \
+    statement = """python %s/csv2db.py \
                    -t %s --ignore-empty \
                    < %s > %s \
                 """ % (PARAMS["general_cgatscriptsdir"], tablename, infile, outfile)
