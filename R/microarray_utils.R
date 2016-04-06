@@ -299,9 +299,12 @@ scatterplotAbundancesClusters <- function(matrix.file,
 			# order for colours to work
 			dat.summarised <- dat.summarised[order(dat.summarised$cluster),]
 
+			# get size - big for in cluster
+			dat.summarised$size <- ifelse(dat.summarised$cluster == "not changed", 1, 4)
+
 			# scatterplot the results
 			col <- factor(dat.summarised$cluster, levels = sort(unique(dat.summarised$cluster)))
-                        plot1 <- ggplot(dat.summarised, aes(x=average, y=average.1, colour=col, label=annotation, stat="identity"))
+                        plot1 <- ggplot(dat.summarised, aes(x=average, y=average.1, colour=col, label=annotation, stat="identity", size=size))
 	                plot2 <- plot1 + geom_point(shape=18) + xlab(cond1) + ylab(cond2)
 			plot3 <- plot2 + geom_abline(slope=1, intercept=1, linetype="dashed")
 			plot4 <- plot3 + geom_abline(slope=1, intercept=-1, linetype="dashed") 
