@@ -226,7 +226,7 @@ def pcaSamplesOnExpressionValues(infile, outfile):
           pc.dat.scores$cond[i] <- name
       }    
 
-      ggplot(data.frame(pc.dat.scores), aes(x = PC1, y = PC2, colour = cond)) + xlim(min(pc.dat.scores$PC1)-50, max(pc.dat.scores$PC1)+50) + geom_point(size = 6)
+      ggplot(data.frame(pc.dat.scores), aes(x = PC1, y = PC3, colour = cond)) + xlim(-25,25) + ylim(-25,25) + geom_point(size = 6)
       ggsave(file = "%s", limitsize = F)
       ''' % (infile, outfile))
 
