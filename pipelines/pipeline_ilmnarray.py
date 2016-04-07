@@ -423,7 +423,7 @@ def loadLimma(infile, outfile):
 ###################################################################
 ###################################################################
 
-@jobs_limit("R", 1)
+@jobs_limit(1, "R")
 @transform(runLimma, suffix(".result"), ".ma.pdf")    
 def MAPlotResults(infile, outfile):
     '''
@@ -441,7 +441,7 @@ def MAPlotResults(infile, outfile):
 ###################################################################
 ###################################################################
 
-@jobs_limit("R", 1)
+@jobs_limit(1, "R")
 @transform(runLimma, suffix(".result"), ".volcano.pdf")    
 def volcanoPlotResults(infile, outfile):
     '''
