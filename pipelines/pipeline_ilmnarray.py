@@ -422,6 +422,8 @@ def loadLimma(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+@jobs_limit("R", 1)
 @transform(runLimma, suffix(".result"), ".ma.pdf")    
 def MAPlotResults(infile, outfile):
     '''
@@ -438,6 +440,8 @@ def MAPlotResults(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+@jobs_limit("R", 1)
 @transform(runLimma, suffix(".result"), ".volcano.pdf")    
 def volcanoPlotResults(infile, outfile):
     '''
@@ -454,6 +458,7 @@ def volcanoPlotResults(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 @merge([loadLimma, loadProbe2GeneMap], "differential_expression.dir/differentially_expressed.tsv")
 def buildDifferentiallyExpressedGeneList(infiles, outfile):
     '''
@@ -479,6 +484,7 @@ def buildDifferentiallyExpressedGeneList(infiles, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 @transform(buildDifferentiallyExpressedGeneList, suffix(".tsv"), ".load")
 def loadDifferentiallyExpressedGeneList(infile, outfile):
     '''
@@ -500,6 +506,7 @@ def loadDifferentiallyExpressedGeneList(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 @split(loadDifferentiallyExpressedGeneList, "differential_expression.dir/*.venn.pdf")
 def vennOverlap(infile, outfiles):
     '''
@@ -513,6 +520,7 @@ def vennOverlap(infile, outfiles):
 ###################################################################
 ###################################################################
 ###################################################################
+
 @transform(loadDifferentiallyExpressedGeneList, 
            suffix(".load"), 
            add_inputs(NORM_TARGET),
@@ -553,6 +561,7 @@ def differential_expression():
 ###################################################################
 ###################################################################
 ###################################################################
+
 @follows(mkdir("pathways.dir"))
 @transform(buildDifferentiallyExpressedGeneList, regex("(\S+)/(\S+).tsv"), r"pathways.dir/\2.background")
 def buildBackgroundFile(infile, outfile):
@@ -566,6 +575,7 @@ def buildBackgroundFile(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 @follows(mkdir("pathways.dir"))
 @transform(buildDifferentiallyExpressedGeneList, regex("(\S+)/(\S+).tsv"), r"pathways.dir/\2.foreground")
 def buildForegroundFile(infile, outfile):
