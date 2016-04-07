@@ -265,7 +265,7 @@ scatterplotAbundancesClusters <- function(matrix.file,
 			 rownames(clusters) <- clusters$probe
 
 			 # get colours associated with cluster
-			 clusters$colour <- rainbow(max(clusters$cluster))[clusters$cluster]
+			 clusters$colour <- rainbow(max(clusters$cluster), s=1, v=0.75)[clusters$cluster]
 
 			 # get conditions
 			 conds <- unlist(strsplit(colnames(dat), ".R[0-9]"))
