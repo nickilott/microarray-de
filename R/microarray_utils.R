@@ -10,6 +10,7 @@
 library("ggplot2")
 library("grid")
 library("plyr")
+library("ggrepel")
 
 ##########################################
 ##########################################
@@ -288,7 +289,7 @@ scatterplotAbundances <- function(matrix.file,
 			 plot3 <- plot2 + geom_abline(slope=1, intercept=1, linetype="dashed")
 			 plot4 <- plot3 + geom_abline(slope=1, intercept=-1, linetype="dashed") 
 			 plot5 <- plot4 + geom_abline(slope=1, intercept=0)
-			 plot5 + geom_text() + scale_colour_manual(values=c("red", "grey"))
+			 plot5 + geom_text_repel(colour="black") + scale_colour_manual(values=c("red", "grey"))
 		         ggsave(outfile)
 }
 
@@ -356,7 +357,7 @@ scatterplotAbundancesClusters <- function(matrix.file,
 			 plot3 <- plot2 + geom_abline(slope=1, intercept=1, linetype="dashed")
 			 plot4 <- plot3 + geom_abline(slope=1, intercept=-1, linetype="dashed") 
 			 plot5 <- plot4 + geom_abline(slope=1, intercept=0)
-			 plot5 + geom_text(colour="black") + scale_colour_manual(values=unique(dat.summarised$colour))
+			 plot5 + geom_text_repel(colour="black") + scale_colour_manual(values=unique(dat.summarised$colour))
 		         ggsave(outfile)
 }
 
@@ -410,9 +411,10 @@ scatterplotFoldChanges <- function(results1,
 		       maximum <- max(append(results$logFC, results$logFC.1))
 		       minimum <- min(append(results$logFC, results$logFC.1))
 
-		       plot1 <- ggplot(results, aes(x=logFC, y=logFC.1, colour=colour, label=annotation, stat="identity", size=size))
+		       col <- factor(results$cluster, levels = sort(unique(results$cluster)))	
+		       plot1 <- ggplot(results, aes(x=logFC, y=logFC.1, colour=col, label=annotation, stat="identity", size=size))
 		       plot2 <- plot1 + geom_point(shape=18) + scale_size_area(max_size=3)
-		       plot3 <- plot2 + geom_text(colour="black", size=5) + scale_colour_manual(values=unique(results$colour))
+		       plot3 <- plot2 + geom_text_repel(colour="black", size=5) + scale_colour_manual(values=unique(results$colour))
 		       plot4 <- plot3 + xlim(minimum, maximum) + ylim(minimum, maximum)
 		       plot5 <- plot4 + geom_hline(yintercept=c(-1,1), linetype="dashed") + geom_vline(xintercept=c(-1,1), linetype="dashed")
 		       plot5 
