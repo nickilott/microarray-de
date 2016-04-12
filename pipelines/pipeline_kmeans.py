@@ -414,7 +414,7 @@ def getPathwayGenes(infiles, outfile):
 ########################################################
 
 
-@follows()
+@follows(getPathwayGenes,plotAnnotatedHeatmap)
 def full():
     pass
 
