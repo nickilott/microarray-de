@@ -102,9 +102,7 @@ runPCA <- function(matrix.file){
 
 plotPCA <- function(pc.dat,
                     pcs=c("PC1", "PC2"),
-		    outfile="outfile_pca.pdf",
-		    x.lim=c(-25,25),
-		    y.lim=c(-25,25)){
+		    outfile="outfile_pca.pdf"){
 
       # get scores
       pc.dat.scores <- data.frame(pc.dat$x)
@@ -122,11 +120,15 @@ plotPCA <- function(pc.dat,
       pc2 <- pcs[2]
       imps <- c(imps[,pc1][2], imps[,pc2][2])
 
-      plot1 <- ggplot(data.frame(pc.dat.scores), aes(x=get(pcs[1]), y=get(pcs[2]), colour = cond))
-      plot2 <- plot1 + xlim(x.lim[1], x.lim[2]) + ylim(y.lim[1],y.lim[2]) + geom_point(shape=18, size = 6)
+      minimum = min(append(pc.dat.scores[,pc1], pc.dat.scores[,pc2]))
+      maximum = max(append(pc.dat.scores[,pc1], pc.dat.scores[,pc2]))
+
+      plot1 <- ggplot(data.frame(pc.dat.scores), aes(x=get(pcs[1]), y=get(pcs[2]), colour = cond, fill=cond))
+      plot2 <- plot1  + geom_point(shape=18, size = 6) 
       plot2 + xlab(as.character(imps[1])) + ylab(as.character(imps[2]))
       ggsave(file = outfile, limitsize = F)
-      }
+#+ stat_ellipse(type="t", linetype="dashed", geom="polygon", level=0.95, alpha=0.2)
+}
 
 ##########################################
 ##########################################
