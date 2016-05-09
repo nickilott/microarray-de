@@ -210,25 +210,64 @@ def pcaSamplesOnExpressionValues(infile, outfile):
     '''
     use prcomp to cluster samples
     '''
-    R('''
-      library("ggplot2")
-      dat <- read.csv("%s", header = T, stringsAsFactors = F, sep = "\t")
-      rownames(dat) <- dat$ids
-      dat <- dat[,1:ncol(dat)-1]
+    R('''library("ggplot2")''')
+    R('''library(gridExtra)''')
 
-      pc.dat <- prcomp(as.matrix(t(dat)))
-      pc.dat.scores <- data.frame(pc.dat$x)
+    R('''plotPCA <- function(scores, ve, pcs=c("PC1", "PC2")){
+                xve <- round(ve[pcs[1],][1],2)*100
+                yve <- round(ve[pcs[2],][1],2)*100
+                xlab <- paste(xve, "%", sep="")
+                xlab <- paste(pcs[1], xlab)
+                ylab <- paste(yve, "%", sep="")
+                ylab <- paste(pcs[2], ylab)
+                plot1 <- ggplot(scores, aes(x=get(pcs[1]), 
+                                            y=get(pcs[2]), 
+                                            colour=cond))
+                plot2 <- plot1 + geom_point(pch=18, size=4)
+                plot3 <- plot2 + xlab(xlab) + ylab(ylab) + theme_bw()
+                return(plot3)
+    }''')
 
-      # condition colours
-      for (i in 1:nrow(pc.dat.scores)){
-          name = unlist(strsplit(rownames(pc.dat.scores)[i], ".R"))
-          name = name[1]
-          pc.dat.scores$cond[i] <- name
-      }    
+    R('''dat <- read.csv("%s", header = T, stringsAsFactors = F, sep = "\t")
+         rownames(dat) <- dat$ids
+         dat <- dat[,1:ncol(dat)-1]
 
-      ggplot(data.frame(pc.dat.scores), aes(x = PC1, y = PC3, colour = cond)) + geom_point(size = 6)
-      ggsave(file = "%s", limitsize = F)
-      ''' % (infile, outfile))
+         pc.dat <- prcomp(as.matrix(t(dat)))
+         pc.dat.scores <- data.frame(pc.dat$x)
+
+         # condition colours
+         for (i in 1:nrow(pc.dat.scores)){
+             name = unlist(strsplit(rownames(pc.dat.scores)[i], ".R"))
+             name = name[1]
+             pc.dat.scores$cond[i] <- name
+    }''' % infile)    
+
+    # get the variance explained
+    R('''ve <- data.frame(summary(pc.dat)$importance)''')
+    R('''ve <- t(ve[2,])''')
+    
+    # plot first 3 princliple components - if 3 exist
+    R('''if (ncol(dat) < 4){
+           height <- 7
+           width <- 7
+           p1 <- plotPCA(pc.dat.scores, ve, pcs=c("PC1", "PC2"))
+           grid.arrange(p1, ncol=1)
+           g <- arrangeGrob(p1, ncol=1)}else{
+           height <- 7
+           width <- 15
+           p1 <- plotPCA(pc.dat.scores, ve, pcs=c("PC1", "PC2"))
+           p2 <- plotPCA(pc.dat.scores, ve, pcs=c("PC1", "PC3"))
+           p3 <- plotPCA(pc.dat.scores, ve, pcs=c("PC2", "PC3"))
+           grid.arrange(p1, p2, p3, ncol=3)
+           g <- arrangeGrob(p1, p2, p3, ncol=3)
+         }''')
+    R('''ggsave("%s", g, width=width, height=height)''' % outfile)
+
+
+
+      # ggplot(data.frame(pc.dat.scores), aes(x=PC1, y=PC3, colour = cond)) + geom_point(size = 6, pch=18)
+      # ggsave(file = "%s", limitsize = F)
+      # ''' % (infile, outfile))
 
 ########################################################
 ########################################################
@@ -486,7 +525,7 @@ def heatmapDifferentiallyExpressedGeneList(dbh,
       # heatmap
       cols = colorRampPalette(c("blue", "white", "red"))(20)
       pdf("%s")
-      pheatmap(diff.matrix, col = cols, scale = "row", fontsize = 40)
+      pheatmap(diff.matrix, col = cols, scale = "row", fontsize = 10)
       dev.off()
       ''' % (rdir, data_matrix, diff_probes, outfile))
 
@@ -600,9 +639,6 @@ def getPathwayGenes(goresult, gene2pathways):
         desc2order.append((description, fdr))
     desc2order.sort(key=lambda x: x[1])
     
-    # take top 10 as in barplots
-#    desc2order = desc2order[0:10]
-
     # map pathways to genes
     for line in gene2pathways.readlines():
         data = line[:-1].split("\t")

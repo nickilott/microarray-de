@@ -125,7 +125,7 @@ plotPCA <- function(pc.dat,
 
       plot1 <- ggplot(data.frame(pc.dat.scores), aes(x=get(pcs[1]), y=get(pcs[2]), colour = cond, fill=cond))
       plot2 <- plot1  + geom_point(shape=18, size = 6) 
-      plot2 + xlab(as.character(imps[1])) + ylab(as.character(imps[2]))
+      plot2 + xlab(as.character(imps[1])) + ylab(as.character(imps[2])) + theme_bw()
       ggsave(file = outfile, limitsize = F)
 #+ stat_ellipse(type="t", linetype="dashed", geom="polygon", level=0.95, alpha=0.2)
 }
@@ -430,8 +430,92 @@ scatterplotFoldChanges <- function(results1,
 
 plotPathways <- function(pathway_results, colour="red", outfile="pathways.pdf"){
 	     dat <- readData(pathway_results)
-	     plot1 <- ggplot(dat, aes(x=description, y=ratio))
+	     dat <- dat[dat$code == "+",]
+	     dat <- dat[order(dat$ratio),]
+	     plot1 <- ggplot(dat, aes(x=factor(description, levels=dat$description), y=ratio, stat="identity"))
 	     plot2 <- plot1 + geom_bar(stat="identity", fill=colour)
-	     plot2 + scale_fill_manual(values=c(colour)) + coord_flip()
+	     plot2 + scale_fill_manual(values=c(colour)) + coord_flip() + theme_bw()
 	     ggsave(outfile)
 }
+
+
+summariseByDesign <- function(matrix, design, probe){
+
+ 		  # summarise probe expression
+		  # levels by conditions given
+		  # in the design file
+
+		  # read and format matrix
+		  mat <- readData(matrix)
+		  rownames(mat) <- mat$ids
+		  mat <- mat[,grep("ids", colnames(mat), invert=T)]
+
+		  # read design file
+		  design <- readData(design)
+
+		  # subset mat
+		  mat <- mat[,design[,1]]
+
+		  # summarise data by design
+                  res <- data.frame(cbind(design[,2], design[,3], t(mat[probe,])))
+		  colnames(res) <- c("strain", "stimulation", "exprs")
+        	  res$exprs <- as.numeric(as.character(res$exprs))
+		  res$strain <- as.character(res$strain)
+		  res$stimulation <- as.character(res$stimulation)
+		  res.sum <- ddply(res, 
+                         c("strain", "stimulation"),
+                         summarize,
+                         "mean.exprs" = mean(exprs),
+                         "sd" = sd(exprs),
+			 "n" = length(exprs),
+			 "se" = sd/sqrt(n))
+        res.sum <- res.sum[order(res.sum$stimulation, decreasing = T),]
+	results <- list("summarised" = res.sum, "raw" = res)
+	return (results)
+}
+
+lineplotSummarised <- function(summarised, outfile, colours=c()){
+          	   # takes as input summarisedByDesign
+		   # output and plots by condition
+
+		   res.sum <- summarised$summarised
+		   res <- summarised$raw
+		   plot1 <- ggplot(res.sum,
+		                   aes(x=factor(stimulation, levels = unique(stimulation)),
+				   y=mean.exprs,
+				   group=strain,
+				   colour = strain,
+				   stat = "identity"))
+		   plot2 <- plot1 + geom_line()
+		   plot3 <- plot2 + geom_errorbar(aes(ymax=mean.exprs + se,
+		   	    	    		      ymin=mean.exprs - se),
+						      width = 0.2)
+        	   plot4 <- plot3 + scale_colour_manual(values = c("blue", "red"))
+		   plot4 + geom_jitter(data=res,
+		                       aes(x=factor(stimulation, levels=unique(stimulation)),
+				       y=exprs,
+				       group=strain),
+				       height=0.2,
+				       width=0.2,
+				       pch=18) + theme_bw()
+	ggsave(outfile)
+	}
+
+boxplotSummarised <- function(summarised, outfile){
+		   res.sum <- summarised$summarised
+		   res <- summarised$raw
+		   plot1 <- ggplot(res,
+		   	           aes(x=factor(strain, levels=unique(strain)),
+				   y=exprs))
+		   plot2 <- plot1 + geom_boxplot()
+		   plot3 <- plot2 +  geom_jitter(data=res,
+		                       aes(x=factor(strain, levels=unique(strain)),
+				       y=exprs),
+				       height=0.2,
+				       width=0.2,
+				       shape=18,
+				       size=3)
+	           plot4 <- plot3 + facet_grid(~stimulation)
+		   plot4 + theme_bw()
+		   ggsave(outfile)
+		   }

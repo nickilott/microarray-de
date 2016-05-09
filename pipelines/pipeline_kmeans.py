@@ -328,12 +328,14 @@ def runGO(infiles, outfile):
     '''
     foreground, background, gene2pathway = infiles[0], infiles[1], PARAMS.get("pathways_geneset")
     c = P.snip(os.path.basename(foreground), ".foreground")
-
+    threshold = PARAMS.get("pathways_threshold")
+    
     statement = '''python %(cgatscriptsdir)s/runGO.py \
                    --genes=%(foreground)s \
                    --background=%(background)s \
                    --filename-input=%(gene2pathway)s \
-                   -q BH \
+                   -t %(threshold)s \
+                   --sample-size=1000
                    --fdr \
                    --output-filename-pattern="pathways.dir/%(c)s.%%(section)s" \
                    > pathways.dir/pathways.log  

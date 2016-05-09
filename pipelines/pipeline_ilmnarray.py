@@ -591,7 +591,7 @@ def buildForegroundFile(infile, outfile):
 ###################################################################
 ###################################################################
 @split([buildBackgroundFile, buildForegroundFile, PARAMS["pathways_gene2pathway"]]
-       , "pathways.dir/*.overall")
+       , "pathways.dir/*.results")
 def runGO(infiles, outfiles):
     '''
     run go analysis 
@@ -626,7 +626,9 @@ def barplotGO(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
-@transform(runGO, regex("(\S+)/(\S+).overall"),
+
+
+@transform(runGO, regex("(\S+)/(\S+).results"),
            add_inputs(PARAMS["pathways_gene2pathway"]),
            r"\1/\2.genes")
 def buildPathwayGenes(infiles, outfile):
@@ -635,19 +637,24 @@ def buildPathwayGenes(infiles, outfile):
     fall into the pathways identified in the top 10 lists
     '''
     goresult, gene2pathways = infiles[0], infiles[1]
+
     if "_up" in os.path.basename(goresult):
         contrast = os.path.basename(goresult).replace("_up", ",").split(",")[0]
     if "_down" in os.path.basename(goresult):
         contrast = os.path.basename(goresult).replace("_down", ",").split(",")[0]
     dbh = connect()
     result_table = contrast
-    
-    PipelineIlmnArray.buildPathwayGenes(goresult, 
-                                        gene2pathways, 
-                                        contrast, 
-                                        dbh, 
-                                        result_table, 
-                                        outfile)
+
+    # catch where there is no sig
+    if len(IOTools.openFile(goresult).readlines()) == 1:
+        P.touch(outfile)
+    else:
+        PipelineIlmnArray.buildPathwayGenes(goresult, 
+                                            gene2pathways, 
+                                            contrast, 
+                                            dbh, 
+                                            result_table, 
+                                            outfile)
 
 ###################################################################
 ###################################################################
