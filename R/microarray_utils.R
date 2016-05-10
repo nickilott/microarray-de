@@ -96,6 +96,43 @@ runPCA <- function(matrix.file){
        return (pc.dat)
 }
 
+
+##########################################
+##########################################
+##########################################
+
+
+buildPCAScores <- function(pc.dat, outfile){
+	       # return pca scores
+	       scores <- data.frame(pc.dat$x)
+	       scores$sample <- rownames(scores)
+	       scores <- scores[,c("sample", colnames(scores)[1:ncol(scores)-1])]
+	       write.table(scores,
+	                   file=outfile,
+			   sep="\t",
+			   row.names=F,
+			   quote=F)
+}
+
+##########################################
+##########################################
+##########################################
+
+buildPCAVarianceExplained <- function(pc.dat, outfile){
+			  # get variance explained from
+			  # pca
+			  ve <- data.frame(summary(pc.dat)$importance)
+			  ve <- data.frame(t(ve[2,]))
+			  ve$PC <- rownames(ve)
+			  ve <- ve[,c("PC", "Proportion.of.Variance")]
+			  write.table(ve,
+				      file=outfile,
+				      sep="\t",
+				      row.names=F,
+				      quote=F)
+}				      
+
+
 ##########################################
 ##########################################
 ##########################################
@@ -517,5 +554,5 @@ boxplotSummarised <- function(summarised, outfile){
 				       size=3)
 	           plot4 <- plot3 + facet_grid(~stimulation)
 		   plot4 + theme_bw()
-		   ggsave(outfile)
+		   ggsave(outfile, height=7, width=14)
 		   }
