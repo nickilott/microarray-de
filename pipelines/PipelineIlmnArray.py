@@ -15,6 +15,7 @@ import sqlite3
 import CGATPipelines.Pipeline as P
 import random
 import CGAT.Experiment as E
+import CGAT.IOTools as IOTools
 
 def normaliseAndQc( infiles, 
                     outfiles, 
@@ -254,7 +255,7 @@ def pcaSamplesOnExpressionValues(infile, outfile):
            grid.arrange(p1, ncol=1)
            g <- arrangeGrob(p1, ncol=1)}else{
            height <- 7
-           width <- 15
+           width <- 21
            p1 <- plotPCA(pc.dat.scores, ve, pcs=c("PC1", "PC2"))
            p2 <- plotPCA(pc.dat.scores, ve, pcs=c("PC1", "PC3"))
            p3 <- plotPCA(pc.dat.scores, ve, pcs=c("PC2", "PC3"))
@@ -822,5 +823,24 @@ def plotPathwayGenes(infile, outfile):
         # ''' % (infile, title, outfile))
 
 
+def buildMetadataFile(infile, PARAMS, outfile):
+    '''
+    build metadata for reporting purposes
+    '''
+    inf = IOTools.openFile(infile)
+    header = inf.readline().strip("\n").split("\t")
+    header = [x.replace('"', '') for x in header]
+    header = [x for x in header if x != "ids"]
 
+    conditions = set([re.search("(.*)(\.R[0-9]*)", x).group(1) for x in header])
+    conditions = "\n - ".join(conditions)
+    name = PARAMS.get("report_name")
+    description = PARAMS.get("report_description")
+    subtype = PARAMS.get("report_cell_type")
+    
+    outf = IOTools.openFile(outfile, "w")
+    outf.write("""name: %(name)s\nreport_type: microarray\nsubtype: %(subtype)s\ndescription: %(description)s\nconditions:\n - %(conditions)s""" % locals())
+    outf.close()
+
+    
 

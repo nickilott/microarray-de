@@ -183,6 +183,8 @@ PARAMS = P.PARAMS
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 def connect():
     '''
     connect to database.
@@ -203,6 +205,8 @@ def connect():
 ###################################################################
 ## worker tasks
 ###################################################################
+
+
 CONTROL = {1: "control_probe_profile.txt",
            0: None}
 
@@ -234,6 +238,8 @@ def normaliseAndQc( infile, outfiles ):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows(mkdir("probe_info.dir"))
 @merge(["sample_probe_profile.txt", normaliseAndQc],
        "probe_info.dir/probe_info.tsv")
@@ -249,6 +255,8 @@ def buildProbeInfo(infiles, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @transform(buildProbeInfo, suffix(".tsv"), ".load")
 def loadProbeInfo(infile, outfile):
     '''
@@ -270,6 +278,8 @@ def loadProbeInfo(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @transform("sample_probe_profile.txt", 
            suffix("sample_probe_profile.txt"),
            "probe2gene.map")
@@ -287,6 +297,8 @@ def buildProbe2GeneMap(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @transform(buildProbe2GeneMap, suffix(".map"), ".map.load")
 def loadProbe2GeneMap(infile, outfile):
     '''
@@ -308,6 +320,8 @@ def loadProbe2GeneMap(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 if normaliseAndQc:
     NORM_TARGET = "sample_probe_profile.matrix"
 
@@ -327,6 +341,41 @@ def clusterSamplesOnExpressionValues(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
+@jobs_limit(1, "R")
+@follows(mkdir("cluster.dir"))
+@transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.pca.tsv")
+def buildPCAScores(infile, outfile):
+    '''
+    output PCA scores - mainly for reporting
+    '''
+    R('''source("%s/microarray_utils.R")''' % PARAMS.get("rdir"))
+    R('''pc.dat <- runPCA("%s")''' % infile)
+    R('''buildPCAScores(pc.dat, "%s")''' % outfile)
+
+
+###################################################################
+###################################################################
+###################################################################
+
+@jobs_limit(1, "R")
+@follows(mkdir("cluster.dir"))
+@transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.pca.ve.tsv")
+def buildPCAVarianceExplained(infile, outfile):
+    '''
+    output PCA variance explained
+    '''
+    R('''source("%s/microarray_utils.R")''' % PARAMS.get("rdir"))
+    R('''pc.dat <- runPCA("%s")''' % infile)
+    R('''buildPCAVarianceExplained(pc.dat, "%s")''' % outfile)
+
+
+###################################################################
+###################################################################
+###################################################################
+
+
 @follows(normaliseAndQc, mkdir("cluster.dir"))
 @transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.pca.pdf")
 def pcaSamplesOnExpressionValues(infile, outfile):
@@ -340,6 +389,8 @@ def pcaSamplesOnExpressionValues(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows(normaliseAndQc, mkdir("cluster.dir"))
 @transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.correlation.pdf")
 def correlateSamplesOnExpressionValues(infile, outfile):
@@ -348,7 +399,7 @@ def correlateSamplesOnExpressionValues(infile, outfile):
     '''
     to_cluster = False
     PipelineIlmnArray.correlateSamplesOnExpressionValues(infile,
-                                                   outfile)
+                                                         outfile)
 
 
 ###################################################################
@@ -356,11 +407,14 @@ def correlateSamplesOnExpressionValues(infile, outfile):
 ###################################################################
 ## intermediate target
 ###################################################################
+
 @follows( normaliseAndQc,
           buildProbeInfo,
           clusterSamplesOnExpressionValues,
           pcaSamplesOnExpressionValues,
-          correlateSamplesOnExpressionValues)
+          correlateSamplesOnExpressionValues,
+          buildPCAVarianceExplained,
+          buildPCAScores)
 def QC(): pass
 
 ###################################################################
@@ -370,6 +424,8 @@ def QC(): pass
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows(normaliseAndQc, mkdir("differential_expression.dir"))
 @transform(NORM_TARGET, regex("(\S+).matrix"), r"differential_expression.dir/\1.design")
 def buildDesignFile(infile, outfile):
@@ -385,6 +441,8 @@ def buildDesignFile(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows(normaliseAndQc)
 @split([NORM_TARGET, buildDesignFile, buildProbe2GeneMap], "differential_expression.dir/*.result")
 def runLimma(infiles, outfiles):
@@ -402,6 +460,8 @@ def runLimma(infiles, outfiles):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @transform(runLimma, suffix(".result"), ".result.load")
 def loadLimma(infile, outfile):
     '''
@@ -423,6 +483,7 @@ def loadLimma(infile, outfile):
 ###################################################################
 ###################################################################
 
+
 @jobs_limit(1, "R")
 @transform(runLimma, suffix(".result"), ".ma.pdf")    
 def MAPlotResults(infile, outfile):
@@ -441,6 +502,7 @@ def MAPlotResults(infile, outfile):
 ###################################################################
 ###################################################################
 
+
 @jobs_limit(1, "R")
 @transform(runLimma, suffix(".result"), ".volcano.pdf")    
 def volcanoPlotResults(infile, outfile):
@@ -458,6 +520,7 @@ def volcanoPlotResults(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 
 @merge([loadLimma, loadProbe2GeneMap], "differential_expression.dir/differentially_expressed.tsv")
 def buildDifferentiallyExpressedGeneList(infiles, outfile):
@@ -485,6 +548,7 @@ def buildDifferentiallyExpressedGeneList(infiles, outfile):
 ###################################################################
 ###################################################################
 
+
 @transform(buildDifferentiallyExpressedGeneList, suffix(".tsv"), ".load")
 def loadDifferentiallyExpressedGeneList(infile, outfile):
     '''
@@ -507,6 +571,7 @@ def loadDifferentiallyExpressedGeneList(infile, outfile):
 ###################################################################
 ###################################################################
 
+
 @split(loadDifferentiallyExpressedGeneList, "differential_expression.dir/*.venn.pdf")
 def vennOverlap(infile, outfiles):
     '''
@@ -520,6 +585,7 @@ def vennOverlap(infile, outfiles):
 ###################################################################
 ###################################################################
 ###################################################################
+
 
 @transform(loadDifferentiallyExpressedGeneList, 
            suffix(".load"), 
@@ -543,6 +609,8 @@ def heatmapDifferentiallyExpressedGeneList(infiles, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows(loadLimma,
          MAPlotResults,
          volcanoPlotResults,
@@ -562,6 +630,7 @@ def differential_expression():
 ###################################################################
 ###################################################################
 
+
 @follows(mkdir("pathways.dir"))
 @transform(buildDifferentiallyExpressedGeneList, regex("(\S+)/(\S+).tsv"), r"pathways.dir/\2.background")
 def buildBackgroundFile(infile, outfile):
@@ -575,6 +644,7 @@ def buildBackgroundFile(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
 
 @follows(mkdir("pathways.dir"))
 @transform(buildDifferentiallyExpressedGeneList, regex("(\S+)/(\S+).tsv"), r"pathways.dir/\2.foreground")
@@ -590,6 +660,8 @@ def buildForegroundFile(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @split([buildBackgroundFile, buildForegroundFile, PARAMS["pathways_gene2pathway"]]
        , "pathways.dir/*.results")
 def runGO(infiles, outfiles):
@@ -613,6 +685,8 @@ def runGO(infiles, outfiles):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @jobs_limit(1, "R")
 @transform(runGO, suffix(".overall"), ".barplot.pdf")
 def barplotGO(infile, outfile):
@@ -659,6 +733,8 @@ def buildPathwayGenes(infiles, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @transform(buildPathwayGenes, suffix(".genes"), ".genes.load")
 def loadPathwayGenes(infile, outfile):
     '''
@@ -674,6 +750,8 @@ def loadPathwayGenes(infile, outfile):
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @jobs_limit(1, "R")
 @transform(buildPathwayGenes, suffix(".genes"), ".genes.plots")
 def plotPathwayGenes(infile, outfile):
@@ -693,19 +771,40 @@ def pathways():
     pass
 
 
+###################################################################
+###################################################################
+###################################################################
+
+@merge(normaliseAndQc, "metadata.yml")
+def buildMetadata(infiles, outfile):
+    '''
+    build metadata file for reporting purposes
+    '''
+    infile = [x for x in infiles if x == "sample_probe_profile.matrix"][0]
+    PipelineIlmnArray.buildMetadataFile(infile,
+                                        PARAMS,
+                                        outfile)
+
+    
+
 ## primary targets
 ###################################################################
+
+
 @follows(QC,
          loadProbeInfo,
          differential_expression,
          barplotGO,
-         pathways)
+         pathways,
+         buildMetadata)
 def full():
     pass
 
 ###################################################################
 ###################################################################
 ###################################################################
+
+
 @follows( mkdir( "report" ) )
 def build_report():
     '''build report from scratch.'''
@@ -731,18 +830,5 @@ def publish():
 if __name__== "__main__":
     sys.exit( P.main(sys.argv) )    
 
-    # target = sys.argv[-1]
-    # if sys.argv[-2] in ["make", "show", "plot"]:
-    #     do = sys.argv[-2]
-    # if "-v" in "".join(sys.argv):
-    #     verbose = int([x[-1] for x in sys.argv if x[:-1] == "-v"][0])
-    # else:
-    #     verbose = 1
-    # if do == "make":
-    #     pipeline_run(target, verbose = verbose, multiprocess=8)
-    # elif do == "plot":
-    #     pipeline_printout_graph("pipeline.dot", "dot", target)
-    # elif do == "show":
-    #     pipeline_printout(sys.stdout, target, verbose = verbose)
         
 
