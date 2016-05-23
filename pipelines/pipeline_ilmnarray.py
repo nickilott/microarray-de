@@ -344,7 +344,7 @@ def clusterSamplesOnExpressionValues(infile, outfile):
 
 
 @jobs_limit(1, "R")
-@follows(mkdir("cluster.dir"))
+@follows(normaliseAndQc, mkdir("cluster.dir"))
 @transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.pca.tsv")
 def buildPCAScores(infile, outfile):
     '''
@@ -360,7 +360,7 @@ def buildPCAScores(infile, outfile):
 ###################################################################
 
 @jobs_limit(1, "R")
-@follows(mkdir("cluster.dir"))
+@follows(normaliseAndQc, mkdir("cluster.dir"))
 @transform(NORM_TARGET, regex("(\S+).matrix"), r"cluster.dir/\1.pca.ve.tsv")
 def buildPCAVarianceExplained(infile, outfile):
     '''
