@@ -63,6 +63,30 @@ def readSampleSheet(sampleSheet, chop = False):
         
     return mapping
         
+
+####################################################
+####################################################
+####################################################
+def outputMapping(probe_profile, mapping, type = "probe"):
+    '''
+    output renamed sample probe profile file
+    '''
+    inf = probe_profile
+    outf = open("originalid2newid.tsv", "w")
+    for line in inf.readlines():
+        if line.startswith("TargetID"):
+            header = line.strip().split("\t")
+            break
+    found = set()
+    for h in header[2:]:
+        k = h.split("-")[1]
+        if k in found:
+            continue
+        else:
+            found.add(k)
+            outf.write("\t".join([k, mapping[k]]) + "\n")
+    outf.close()
+
 ####################################################
 ####################################################
 ####################################################
@@ -202,6 +226,8 @@ def main( argv = None ):
                       help="rename columns according to sample sheet")
     parser.add_option("-c", "--chop", dest="chop", action="store_true",
                       help="chop suffix '_A etc from samples'")
+    parser.add_option("--output-mapping", dest="output_mapping", action="store_true",
+                      help="output original to new identifier mapping")
     parser.add_option("-t", "--type", dest="type", type = "choice",
                       choices = ("control", "probe"), help="is it control or probe profile?")
     parser.add_option("--file2", dest="file_2", type = "string",
@@ -211,6 +237,17 @@ def main( argv = None ):
     ## add common options (-h/--help, ...) and parse command line 
     (options, args) = E.Start( parser, argv = argv )
 
+    # at the moment the mapping file is output with a default
+    # name
+    if options.output_mapping:
+        assert options.sample_sheet, "must supply a sample sheet to output mapping"
+        probe_profile, sample_sheet = options.stdin, options.sample_sheet
+        samples = readSampleSheet(sample_sheet, options.chop)
+        outputMapping(probe_profile, samples, type="probe")
+        E.warn("cannot perform %s if --output-mapping is specified" % options.do)
+        # cannot do anything else if this is specified
+        return
+        
     if options.do == "remove":
         assert options.sample_list, "must provide a list of sample to remove"
         samples = options.sample_list.split(",")
