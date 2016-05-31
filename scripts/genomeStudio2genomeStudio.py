@@ -71,20 +71,10 @@ def outputMapping(probe_profile, mapping, type = "probe"):
     '''
     output renamed sample probe profile file
     '''
-    inf = probe_profile
     outf = open("originalid2newid.tsv", "w")
-    for line in inf.readlines():
-        if line.startswith("TargetID"):
-            header = line.strip().split("\t")
-            break
-    found = set()
-    for h in header[2:]:
-        k = h.split("-")[1]
-        if k in found:
-            continue
-        else:
-            found.add(k)
-            outf.write("\t".join([k, mapping[k]]) + "\n")
+    outf.write("original_id\tnew_id\n")
+    for original, new in mapping.iteritems():
+        outf.write("%s\t%s\n" % (original, new))
     outf.close()
 
 ####################################################
@@ -244,9 +234,11 @@ def main( argv = None ):
         probe_profile, sample_sheet = options.stdin, options.sample_sheet
         samples = readSampleSheet(sample_sheet, options.chop)
         outputMapping(probe_profile, samples, type="probe")
-        E.warn("cannot perform %s if --output-mapping is specified" % options.do)
-        # cannot do anything else if this is specified
-        return
+        if options.do:
+            E.warn("cannot perform %s if --output-mapping is specified" % options.do)
+            return
+        else:
+            return
         
     if options.do == "remove":
         assert options.sample_list, "must provide a list of sample to remove"
