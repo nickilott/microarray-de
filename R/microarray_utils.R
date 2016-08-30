@@ -456,7 +456,7 @@ scatterplotFoldChanges <- function(results1,
 		       plot3 <- plot2 + geom_text_repel(colour="black", size=5) + scale_colour_manual(values=unique(results$colour))
 		       plot4 <- plot3 + xlim(minimum, maximum) + ylim(minimum, maximum)
 		       plot5 <- plot4 + geom_hline(yintercept=c(-1,1), linetype="dashed") + geom_vline(xintercept=c(-1,1), linetype="dashed")
-		       plot5 
+		       plot5 + theme_bw() + ylim(c(min(results$logFC.1), max(results$emacslogFC.1)))
 		       ggsave(outfile)
 }
 
