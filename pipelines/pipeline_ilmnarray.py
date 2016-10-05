@@ -668,19 +668,29 @@ def runGO(infiles, outfiles):
     '''
     run go analysis 
     '''
-    to_cluster = False
+#    to_cluster = False
     background, genes, gene2pathway = infiles[0], infiles[1], infiles[2]
-
-    statement = """python %s/runGO.py \
-                   --genes=%s \
-                   --background=%s \
-                   --filename-input=%s \
-                   -q BH \
+    fdr_method = PARAMS.get("pathways_fdr_method")
+    fdr_threshold = PARAMS.get("pathways_fdr")
+    if fdr_method == "empirical":
+        add_option = "--sample-size=%i" % PARAMS.get("pathways_sample")
+    else:
+        add_option = ""
+    set = open(genes).readline()[:-1].split("\t")[1:]
+    statement = '''python %(cgatscriptsdir)s/runGO.py \
+                   --genes=%(genes)s \
+                   --background=%(background)s \
+                   --filename-input=%(gene2pathway)s \
+                   -q %(fdr_method)s \
                    --fdr \
+                   -t %(fdr_threshold)f \
+                   %(add_option)s
                    --output-filename-pattern="pathways.dir/%%(set)s.%%(go)s.%%(section)s" \
                    > pathways.dir/pathways.log  \
-                """ % (PARAMS["general_cgatscriptsdir"], genes, background, gene2pathway)
-    os.system(statement)
+                '''
+    P.run()
+    #% (PARAMS["general_cgatscriptsdir"], genes, background, gene2pathway, fdr_method, fdr_threshold, add_option)
+    #os.system(statement)
 
 ###################################################################
 ###################################################################
