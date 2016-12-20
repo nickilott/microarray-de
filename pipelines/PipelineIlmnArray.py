@@ -311,7 +311,6 @@ def buildDesignFile(infile, outfile, paired = False):
     # of its name in the header
     conds = [re.match("(.*)(\.R[0-9]*)", x.strip('"')).groups()[0] for x in header]
     pairs = [re.match("(.*)(\.R[0-9]*)", x.strip('"')).groups()[1].split(".R")[1] for x in header]
-    print pairs
 
     # number of distinct conditions
     nconds = len(set(conds))
