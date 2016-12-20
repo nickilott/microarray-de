@@ -18,11 +18,17 @@ library("affy")
 
 # limma
 preprocessLimma <- function(infile, ctrlfile, method = "quantile"){
-     
-     dat <- read.ilmn(infile, ctrlfiles=ctrlfile, other.columns = "Detection")
+
+     if (ctrlfile == "None"){
+         dat <- read.ilmn(infile, other.columns = "Detection")}
+     else{
+         dat <- read.ilmn(infile, ctrlfiles=ctrlfile, other.columns = "Detection")}
+
      dat.bgc <- nec(dat)
+
      # remove negative controls before normalization
-     dat.bgc <- dat.bgc[dat.bgc$genes$Status == "regular",]
+     # this suspiciously does not work anymore 20/12/2016
+     # dat.bgc <- dat.bgc[dat.bgc$genes$Status == "regular",]
      dat.norm <- normalizeBetweenArrays(dat.bgc, method = method)
      return (dat.norm$E)
 }
@@ -32,6 +38,7 @@ preprocessLumi <- function(infile, ctrlfile, method = "vsn"){
     
      library("vsn") 
      dat <- lumiR(infile)
+
      controlData(dat) <- ctrlfile
      dat.bgc <- lumiB(dat, method = "bgAdjust")
 
