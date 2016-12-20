@@ -307,8 +307,6 @@ def buildDesignFile(infile, outfile, paired = False):
     header = open(infile).readline()[:-1].split("\t")
     header = [h for h in header if "ids" not in h]
 
-    print header
-    
     # condition associated with each sample is a function
     # of its name in the header
     conds = [re.match("(.*)(\.R[0-9]*)", x.strip('"')).groups()[0] for x in header]
